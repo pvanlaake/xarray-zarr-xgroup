@@ -7,6 +7,7 @@ name = "xarray-zarr-xgroup"
 version = "0.1.0"
 description = "XArray backend for cross-group Zarr reference resolution"
 readme = "README.md"
+license = {text = "Apache-2.0"}
 requires-python = ">=3.11"
 dependencies = [
     "xarray>=2024.10.0",
