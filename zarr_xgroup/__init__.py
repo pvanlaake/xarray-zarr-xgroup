@@ -1,0 +1,2 @@
+from zarr_xgroup.errors import _check_dependencies
+_check_dependencies()
