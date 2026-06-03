@@ -14,6 +14,9 @@ dependencies = [
     "zarr>=3.0.0",
     "numpy>=1.24.0",
     "packaging>=23.0",
+    "fsspec>=2026.4.0",
+    "requests>=2.34.2",
+    "aiohttp>=3.14.0",
 ]
 
 [project.entry-points."xarray.backends"]
