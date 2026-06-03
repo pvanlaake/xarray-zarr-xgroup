@@ -1,0 +1,88 @@
+{
+  "attributes": {
+    "zarr_conventions": [
+      {
+        "schema_url": "https://raw.githubusercontent.com/R-CF/zarr_convention_cs/main/schema.json",
+        "uuid": "e4dbf0b7-7a00-4ce6-b23e-484292014ab4",
+        "name": "cs"
+      },
+      {
+        "schema_url": "https://raw.githubusercontent.com/R-CF/zarr_convention_ref/main/schema.json",
+        "uuid": "d89b30cf-ed8c-43d5-9a16-b492f0cd8786",
+        "name": "ref"
+      }
+    ],
+    "crs": {
+      "WGS84": {
+        "axes": {
+          "lon": {
+            "abbreviation": "X",
+            "coordinates": [
+              {
+                "direction": "east",
+                "unit": "degrees",
+                "values": {
+                  "regular": [
+                    -179.75,
+                    0.5
+                  ]
+                }
+              }
+            ]
+          },
+          "lat": {
+            "abbreviation": "Y",
+            "coordinates": [
+              {
+                "direction": "north",
+                "unit": "degrees",
+                "values": {
+                  "regular": [
+                    -89.75,
+                    0.5
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        "id": {
+          "proj:code": "EPSG:4326"
+        }
+      },
+      "standard_calendar": {
+        "axes": {
+          "time": {
+            "abbreviation": "T",
+            "coordinates": [
+              {
+                "direction": "future",
+                "time": {
+                  "unit": "days",
+                  "epoch": "1850-01-01",
+                  "calendar": "standard"
+                },
+                "values": {
+                  "external": {
+                    "ref": {
+                      "node": "../coords/time"
+                    }
+                  }
+                },
+                "boundaries": {
+                  "external": {
+                    "ref": {
+                      "node": "../coords/time_bnds"
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+    }
+  },
+  "zarr_format": 3,
+  "node_type": "group"
+}

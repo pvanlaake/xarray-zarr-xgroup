@@ -1,0 +1,8 @@
+{
+  "attributes": {
+    "title": "cs-convention test store for xarray-zarr-xgroup",
+    "comment": "Exercises all reference patterns in the cs convention."
+  },
+  "zarr_format": 3,
+  "node_type": "group"
+}

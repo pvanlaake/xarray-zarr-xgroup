@@ -1,0 +1,185 @@
+{
+  "shape": [
+    24,
+    5,
+    12,
+    15
+  ],
+  "data_type": "float32",
+  "chunk_grid": {
+    "name": "regular",
+    "configuration": {
+      "chunk_shape": [
+        1,
+        5,
+        12,
+        15
+      ]
+    }
+  },
+  "chunk_key_encoding": {
+    "name": "default",
+    "configuration": {
+      "separator": "/"
+    }
+  },
+  "fill_value": 0.0,
+  "codecs": [
+    {
+      "name": "bytes",
+      "configuration": {
+        "endian": "little"
+      }
+    },
+    {
+      "name": "zstd",
+      "configuration": {
+        "level": 0,
+        "checksum": false
+      }
+    }
+  ],
+  "attributes": {
+    "long_name": "sea water potential temperature",
+    "units": "degrees_C",
+    "zarr_conventions": [
+      {
+        "schema_url": "https://raw.githubusercontent.com/R-CF/zarr_convention_cs/main/schema.json",
+        "uuid": "e4dbf0b7-7a00-4ce6-b23e-484292014ab4",
+        "name": "cs"
+      },
+      {
+        "schema_url": "https://raw.githubusercontent.com/R-CF/zarr_convention_ref/main/schema.json",
+        "uuid": "d89b30cf-ed8c-43d5-9a16-b492f0cd8786",
+        "name": "ref"
+      }
+    ],
+    "cs": {
+      "crs": [
+        {
+          "name": "horizontal",
+          "axes": {
+            "xi_rho": {
+              "abbreviation": "X",
+              "coordinates": [
+                {
+                  "direction": "east",
+                  "unit": "degrees",
+                  "values": {
+                    "regular": [
+                      -70.0,
+                      0.6666666666666666
+                    ]
+                  }
+                }
+              ]
+            },
+            "eta_rho": {
+              "abbreviation": "Y",
+              "coordinates": [
+                {
+                  "direction": "north",
+                  "unit": "degrees",
+                  "values": {
+                    "regular": [
+                      30.0,
+                      0.6666666666666666
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "ocean s-coordinate",
+          "axes": {
+            "s_rho": {
+              "abbreviation": "Z",
+              "coordinates": [
+                {
+                  "direction": "up",
+                  "unit": "1",
+                  "values": {
+                    "external": {
+                      "ref": {
+                        "node": "../params/s_rho"
+                      }
+                    }
+                  },
+                  "parametric": {
+                    "formula": "ocean_s_coordinate_g2",
+                    "terms": {
+                      "s": {
+                        "external": {
+                          "ref": {
+                            "node": "../params/s_rho"
+                          }
+                        }
+                      },
+                      "C": {
+                        "external": {
+                          "ref": {
+                            "node": "../params/Cs_r"
+                          }
+                        }
+                      },
+                      "h": {
+                        "external": {
+                          "ref": {
+                            "node": "../params/h"
+                          }
+                        }
+                      },
+                      "hc": {
+                        "external": {
+                          "ref": {
+                            "node": "../params/hc"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "temporal",
+          "axes": {
+            "time": {
+              "abbreviation": "T",
+              "coordinates": [
+                {
+                  "direction": "future",
+                  "time": {
+                    "unit": "days",
+                    "epoch": "1850-01-01",
+                    "calendar": "standard"
+                  },
+                  "values": {
+                    "external": {
+                      "ref": {
+                        "node": "../coords/time"
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  },
+  "dimension_names": [
+    "time",
+    "s_rho",
+    "eta_rho",
+    "xi_rho"
+  ],
+  "zarr_format": 3,
+  "node_type": "array",
+  "storage_transformers": []
+}

@@ -247,10 +247,12 @@ def _process_coordinates_set(
         from xarray.backends.zarr import ZarrArrayWrapper
         from xarray.core import indexing
         lazy = indexing.LazilyIndexedArray(ZarrArrayWrapper(data))
-        dims = list(data.metadata.dimension_names or [axis_name])
+        raw_dims = data.metadata.dimension_names
+        dims = list(raw_dims) if raw_dims else ([] if data.ndim == 0 else [axis_name])
         variables[var_name] = xr.Variable(dims, lazy, attrs)
     else:
-        variables[var_name] = xr.Variable([axis_name], data, attrs)
+        dims = [axis_name] if data.ndim >= 1 else []
+        variables[var_name] = xr.Variable(dims, data, attrs)
 
     # Boundaries
     bounds_obj = coords_obj.get("boundaries")
@@ -302,12 +304,12 @@ def _process_coordinates_set(
                 from xarray.backends.zarr import ZarrArrayWrapper
                 from xarray.core import indexing
                 lazy = indexing.LazilyIndexedArray(ZarrArrayWrapper(term_data))
-                tdims = list(term_data.metadata.dimension_names or [axis_name])
+                raw_tdims = term_data.metadata.dimension_names
+                tdims = list(raw_tdims) if raw_tdims else ([] if term_data.ndim == 0 else [axis_name])
                 variables[pterm_name] = xr.Variable(tdims, lazy, term_attrs)
             else:
-                variables[pterm_name] = xr.Variable(
-                    [axis_name], term_data, term_attrs
-                )
+                tdims = [axis_name] if term_data.ndim >= 1 else []
+                variables[pterm_name] = xr.Variable(tdims, term_data, term_attrs)
 
 
 def _process_crs(
