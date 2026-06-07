@@ -1,8 +1,20 @@
 """
-uom convention handler for xarray-zarr-xgroup.
+``uom`` service convention handler for xarray-zarr-xgroup.
 
-Tier: service
-Status: stub — not yet implemented.
+The ``uom`` convention defines structured unit-of-measure objects as an
+alternative to plain CF UDUNITS strings. It is used by the ``cs``
+convention for axes where the unit is complex or non-standard.
+
+As a service convention, ``uom`` produces no coordinate variables.
+``uom``-structured unit attributes are preserved in ``Variable.attrs``
+automatically by the backend and are available to downstream tools.
+Plain string ``units`` attributes from CF are handled by XArray's own
+CF decoding layer and are not affected by this handler.
+
+Detection
+---------
+An array declares the ``uom`` convention by including a CMO with
+name ``"uom"`` in its ``zarr_conventions`` attribute.
 """
 
 from __future__ import annotations
@@ -20,12 +32,29 @@ if TYPE_CHECKING:
     import xarray as xr
 
 
+__all__ = ["UomConventionHandler"]
+
+_UOM_NAME = "uom"
+
+
 class UomConventionHandler(ConventionHandler):
-    """Handler for the 'uom' service convention."""
+    """
+    Handler for the ``uom`` service convention.
+
+    Behaviour
+    ---------
+    Produces no coordinate variables. Unit-of-measure attributes are
+    preserved in ``Variable.attrs`` automatically by the backend.
+    Downstream tools that understand the ``uom`` convention can read
+    them from there.
+
+    Plain CF ``units`` string attributes are handled by XArray's own
+    CF decoding machinery and are unaffected by this handler.
+    """
 
     tier = "service"
-    name = "uom"
-    uuid = None  # TODO: set UUID when assigned
+    name = _UOM_NAME
+    uuid = None  # no UUID assigned yet
 
     @staticmethod
     def detect(
@@ -33,7 +62,10 @@ class UomConventionHandler(ConventionHandler):
         group: zarr.Group,
         array: zarr.Array,
     ) -> bool:
-        return convention_is_declared(array, name="uom")
+        """
+        Return True if the ``uom`` convention is declared on this array.
+        """
+        return convention_is_declared(array, name=_UOM_NAME)
 
     def get_variables(
         self,
@@ -41,6 +73,10 @@ class UomConventionHandler(ConventionHandler):
         group: zarr.Group,
         root: zarr.Group,
     ) -> dict[str, xr.Variable]:
-        raise NotImplementedError(
-            _("The 'uom' convention handler is not yet implemented.")
-        )
+        """
+        Return an empty dict.
+
+        Unit-of-measure information is carried as array attributes,
+        not as coordinate arrays, and passes through automatically.
+        """
+        return {}
