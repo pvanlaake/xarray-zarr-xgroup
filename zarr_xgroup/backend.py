@@ -220,10 +220,7 @@ class XGroupBackendEntrypoint(BackendEntrypoint):
     available = True
 
     def guess_can_open(self, filename_or_obj) -> bool:
-        import os
-        if isinstance(filename_or_obj, (str, os.PathLike)):
-            return str(filename_or_obj).rstrip("/").endswith(".zarr")
-        return False
+        return False  # always require explicit engine="xgroup"
 
     # ------------------------------------------------------------------
     # Core resolution logic

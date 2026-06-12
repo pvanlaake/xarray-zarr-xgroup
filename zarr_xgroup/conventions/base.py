@@ -47,10 +47,12 @@ from zarr_xgroup.i18n import _
 
 # Known identifiers for built-in conventions.
 # Detection uses uuid as primary key, name as fallback.
-_CS_UUID   = "e4dbf0b7-7a00-4ce6-b23e-484292014ab4"
-_REF_UUID  = "d89b30cf-ed8c-43d5-9a16-b492f0cd8786"
-_SPATIAL_UUID = "689b58e2-cf7b-45e0-9fff-9cfc0883d6b4"
-_PROJ_UUID    = "f17cb550-5864-4468-aeb7-f3180cfb622f"
+_CS_UUID          = "e4dbf0b7-7a00-4ce6-b23e-484292014ab4"
+_REF_UUID         = "d89b30cf-ed8c-43d5-9a16-b492f0cd8786"
+_SPATIAL_UUID     = "689b58e2-cf7b-45e0-9fff-9cfc0883d6b4"
+_PROJ_UUID        = "f17cb550-5864-4468-aeb7-f3180cfb622f"
+_GEOLOCATION_UUID = "bb9ee930-8c60-4c47-ad6b-8daa558987ed"
+_UOM_UUID         = "3bbe438d-df37-49fe-8e2b-739296d46dfb"
 
 
 def get_declared_conventions(node) -> list[dict]:

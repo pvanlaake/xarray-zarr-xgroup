@@ -24,6 +24,7 @@ from typing import TYPE_CHECKING
 from zarr_xgroup.conventions.base import (
     ConventionHandler,
     convention_is_declared,
+    _UOM_UUID,
 )
 from zarr_xgroup.i18n import _
 
@@ -54,7 +55,7 @@ class UomConventionHandler(ConventionHandler):
 
     tier = "service"
     name = _UOM_NAME
-    uuid = None  # no UUID assigned yet
+    uuid = _UOM_UUID
 
     @staticmethod
     def detect(
