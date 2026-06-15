@@ -11,7 +11,7 @@ import zarr
 import os, shutil
 from pathlib import Path
 
-STORES = Path("/Users/patrickvanlaake/zarr/backend_test_stores")
+STORES = Path(__file__).parent.parent / "zarr_xgroup" / "tests" / "stores" / "spatial-test.zarr"
 STORES.mkdir(exist_ok=True)
 
 rng = np.random.default_rng(42)

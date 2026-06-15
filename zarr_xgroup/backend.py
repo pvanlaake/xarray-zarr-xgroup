@@ -215,7 +215,7 @@ class XGroupBackendEntrypoint(BackendEntrypoint):
         "Open Zarr stores with full cross-group reference resolution "
         "via GeoZarr conventions"
     )
-    url = "https://github.com/R-CF/xarray-zarr-xgroup"
+    url = "https://github.com/pvanlaake/xarray-zarr-xgroup"
     supports_groups = True
     available = True
 

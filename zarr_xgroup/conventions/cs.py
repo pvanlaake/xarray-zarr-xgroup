@@ -18,9 +18,8 @@ Variable naming convention
 - Boundary array for axis ``dim``: ``dim_bounds``
 - Parametric term ``term`` for axis ``dim``: ``dim_pterm_{term}``
 - Additional coordinate set ``n`` for axis ``dim``: ``dim_{n}``
-
-The ``geolocation`` arrays are returned under the names declared by the
-``geolocation`` convention handler, not by this handler directly.
+- Geolocation arrays: keyed by the basename of the resolved array path
+  (e.g. ``longitude``, ``latitude``, ``utm_x``, ``utm_y``)
 """
 
 from __future__ import annotations
@@ -53,21 +52,10 @@ __all__ = ["CsConventionHandler"]
 # ---------------------------------------------------------------------------
 
 def _ref_is_declared(array) -> bool:
-    """Return True if the ``ref`` convention is declared on this array."""
     return convention_is_declared(array, uuid=_REF_UUID, name="ref")
 
 
 def _make_regular(values_obj: dict, length: int) -> np.ndarray:
-    """
-    Materialise a ``regular`` values specification into a numpy array.
-
-    Parameters
-    ----------
-    values_obj : dict
-        The ``regular`` field value: ``[start, increment]``.
-    length : int
-        Number of coordinate values to generate.
-    """
     start, increment = values_obj[0], values_obj[1]
     return np.array([start + i * increment for i in range(length)], dtype=float)
 
@@ -83,12 +71,6 @@ def _resolve_values(
     source_path: str,
     dim_length: int,
 ) -> np.ndarray | Any:
-    """
-    Resolve a ``values`` object to either a numpy array (inline) or a
-    lazy zarr array reference (external).
-
-    Returns the raw data — the caller wraps it in ``xr.Variable``.
-    """
     if "regular" in values_obj:
         return _make_regular(values_obj["regular"], dim_length)
 
@@ -142,9 +124,6 @@ def _resolve_boundaries(
     source_path: str,
     dim_length: int,
 ) -> np.ndarray | Any | None:
-    """
-    Resolve a ``boundaries`` object. Returns None if not present.
-    """
     if boundaries_obj is None:
         return None
 
@@ -174,7 +153,6 @@ def _resolve_boundaries(
 
 
 def _array_dim_length(array, dim_name: str) -> int:
-    """Return the length of a named dimension in the array's shape."""
     try:
         dim_names = list(array.metadata.dimension_names or [])
     except AttributeError:
@@ -183,7 +161,6 @@ def _array_dim_length(array, dim_name: str) -> int:
     if dim_name in dim_names:
         idx = dim_names.index(dim_name)
         return array.shape[idx]
-    # scalar axis not in dimension_names — length is 1
     return 1
 
 
@@ -199,17 +176,12 @@ def _process_coordinates_set(
     source_path: str,
     variables: dict,
 ) -> None:
-    """
-    Process one ``coordinates`` object within an axis and add the
-    resulting variables to ``variables`` in place.
-    """
     import xarray as xr
 
     dim_length = _array_dim_length(array, axis_name)
 
     values_obj = coords_obj.get("values")
     if values_obj is None:
-        # ordinal axis — no coordinate variable to attach
         return
 
     data = _resolve_values(
@@ -223,7 +195,6 @@ def _process_coordinates_set(
         dim_length=dim_length,
     )
 
-    # Build attrs for this coordinate variable
     attrs: dict[str, Any] = {}
     if "direction" in coords_obj:
         attrs["direction"] = coords_obj["direction"]
@@ -237,11 +208,8 @@ def _process_coordinates_set(
     if "attributes" in coords_obj:
         attrs.update(coords_obj["attributes"])
 
-    # Variable name: primary coordinate uses axis name,
-    # additional sets get a numeric suffix
     var_name = axis_name if coord_idx == 0 else f"{axis_name}_{coord_idx}"
 
-    # Wrap zarr arrays lazily; numpy arrays are already materialised
     import zarr as zarr_mod
     if isinstance(data, zarr_mod.Array):
         from xarray.backends.zarr import ZarrArrayWrapper
@@ -273,13 +241,13 @@ def _process_coordinates_set(
                 from xarray.backends.zarr import ZarrArrayWrapper
                 from xarray.core import indexing
                 lazy = indexing.LazilyIndexedArray(ZarrArrayWrapper(bounds_data))
-                dims = list(bounds_data.metadata.dimension_names or [axis_name, "bounds"])
+                raw_dims = bounds_data.metadata.dimension_names
+                dims = list(raw_dims) if raw_dims else ([] if bounds_data.ndim == 0 else [axis_name, "bounds"])
                 variables[bounds_name] = xr.Variable(dims, lazy, {})
             else:
                 variables[bounds_name] = xr.Variable(
                     [axis_name, "bounds"], bounds_data, {}
                 )
-            # record bounds relationship in coordinate attrs
             variables[var_name].attrs["bounds"] = bounds_name
 
     # Parametric terms
@@ -323,36 +291,66 @@ def _process_crs(
     variables: dict,
 ) -> None:
     """
-    Process one ``crs`` object (inline or already resolved from a ref)
-    and add coordinate variables to ``variables`` in place.
+    Process one ``crs`` object and add coordinate variables to ``variables``.
+
+    Handles:
+    - ``axes`` keyed object → coordinate variables per axis
+    - ``geolocation`` object → geodetic and/or planar geolocation arrays
     """
+    # --- axes ---
     axes = crs_obj.get("axes", {})
-    if not isinstance(axes, dict):
-        return
-
-    for axis_name, axis_obj in axes.items():
-        if not isinstance(axis_obj, dict):
-            continue
-
-        coordinates_list = axis_obj.get("coordinates")
-        if coordinates_list is None:
-            # ordinal axis — no coordinates to attach
-            continue
-
-        for coord_idx, coords_obj in enumerate(coordinates_list):
-            if not isinstance(coords_obj, dict):
+    if isinstance(axes, dict):
+        for axis_name, axis_obj in axes.items():
+            if not isinstance(axis_obj, dict):
                 continue
-            _process_coordinates_set(
-                coords_obj,
-                axis_name=axis_name,
-                coord_idx=coord_idx,
-                array=array,
-                group=group,
-                root=root,
-                ref_declared=ref_declared,
-                source_path=source_path,
-                variables=variables,
-            )
+            coordinates_list = axis_obj.get("coordinates")
+            if coordinates_list is None:
+                continue
+            for coord_idx, coords_obj in enumerate(coordinates_list):
+                if not isinstance(coords_obj, dict):
+                    continue
+                _process_coordinates_set(
+                    coords_obj,
+                    axis_name=axis_name,
+                    coord_idx=coord_idx,
+                    array=array,
+                    group=group,
+                    root=root,
+                    ref_declared=ref_declared,
+                    source_path=source_path,
+                    variables=variables,
+                )
+
+    # --- geolocation ---
+    geo_obj = crs_obj.get("geolocation")
+    if geo_obj is not None:
+        # Import lazily to avoid circular dependency
+        from zarr_xgroup.conventions.geolocation import _resolve_arrays_object
+        for kind in ("geodetic", "planar"):
+            arrays_obj = geo_obj.get(kind)
+            if arrays_obj is None:
+                continue
+            try:
+                _resolve_arrays_object(
+                    arrays_obj,
+                    kind=kind,
+                    array=array,
+                    group=group,
+                    root=root,
+                    source_path=source_path,
+                    variables=variables,
+                )
+            except XGroupReferenceError:
+                raise
+            except Exception as exc:
+                warnings.warn(
+                    _(
+                        "Array '{path}': failed to resolve cs/crs/geolocation/"
+                        "{kind} arrays: {exc}"
+                    ).format(path=source_path, kind=kind, exc=exc),
+                    XGroupNoPrincipalWarning,
+                    stacklevel=2,
+                )
 
 
 # ---------------------------------------------------------------------------
@@ -364,9 +362,9 @@ class CsConventionHandler(ConventionHandler):
     Handler for the ``cs`` principal convention.
 
     Traverses the ``cs`` attribute structure of an array, resolves all
-    ``ref`` objects it encounters (for external coordinate arrays and
-    cross-group CRS references), and returns coordinate variables for
-    all declared axes.
+    ``ref`` objects it encounters (for external coordinate arrays,
+    cross-group CRS references, and geolocation arrays), and returns
+    coordinate variables for all declared axes and geolocation arrays.
     """
 
     tier = "principal"
@@ -379,9 +377,6 @@ class CsConventionHandler(ConventionHandler):
         group: zarr.Group,
         array: zarr.Array,
     ) -> bool:
-        """
-        Return True if the ``cs`` convention is declared on this array.
-        """
         return convention_is_declared(array, uuid=_CS_UUID, name="cs")
 
     def get_variables(
@@ -391,18 +386,8 @@ class CsConventionHandler(ConventionHandler):
         root: zarr.Group,
     ) -> dict[str, xr.Variable]:
         """
-        Traverse the ``cs`` attribute and return all coordinate variables.
-
-        Steps
-        -----
-        1. Read ``array.attrs["cs"]`` to get the coordinate set object.
-        2. Iterate over ``cs.crs`` — each item is either an inline CRS
-           object or a ``ref`` object pointing to a CRS in a group.
-        3. For each CRS, iterate over ``axes`` (keyed by dimension name).
-        4. For each axis, iterate over ``coordinates`` and resolve
-           ``values`` and ``boundaries`` (regular, explicit, or external).
-        5. For parametric axes, resolve each formula term.
-        6. Return all resulting ``xr.Variable`` objects.
+        Traverse the ``cs`` attribute and return all coordinate variables,
+        including geolocation arrays declared in ``crs.geolocation``.
         """
         source_path = getattr(array, "path", "<unknown>")
         ref_declared = _ref_is_declared(array)
@@ -450,22 +435,16 @@ class CsConventionHandler(ConventionHandler):
                     )
                     continue
 
-                # resolved is either a dict (attribute fragment) or a node
                 if isinstance(resolved, dict):
-                    crs_obj = resolved
-                else:
-                    # unlikely but handle gracefully
-                    continue
-
-                _process_crs(
-                    crs_obj,
-                    array=array,
-                    group=group,
-                    root=root,
-                    ref_declared=ref_declared,
-                    source_path=source_path,
-                    variables=variables,
-                )
+                    _process_crs(
+                        resolved,
+                        array=array,
+                        group=group,
+                        root=root,
+                        ref_declared=ref_declared,
+                        source_path=source_path,
+                        variables=variables,
+                    )
 
             else:
                 # Inline CRS object

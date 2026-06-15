@@ -38,6 +38,11 @@
   "attributes": {
     "zarr_conventions": [
       {
+        "uuid": "e4dbf0b7-7a00-4ce6-b23e-484292014ab4",
+        "name": "cs",
+        "schema_url": "https://raw.githubusercontent.com/R-CF/zarr_convention_cs/main/schema.json"
+      },
+      {
         "uuid": "bb9ee930-8c60-4c47-ad6b-8daa558987ed",
         "name": "geolocation",
         "schema_url": "https://raw.githubusercontent.com/R-CF/zarr_convention_geolocation/main/schema.json"
@@ -48,34 +53,73 @@
         "schema_url": "https://raw.githubusercontent.com/R-CF/zarr_convention_ref/main/schema.json"
       }
     ],
-    "geolocation": {
-      "geodetic": {
-        "x": {
-          "ref": {
-            "node": "../coords/longitude"
+    "cs": {
+      "crs": [
+        {
+          "name": "rotated pole grid",
+          "axes": {
+            "rlon": {
+              "abbreviation": "X",
+              "coordinates": [
+                {
+                  "direction": "east",
+                  "unit": "degrees",
+                  "values": {
+                    "regular": [
+                      -28.375,
+                      0.44
+                    ]
+                  }
+                }
+              ]
+            },
+            "rlat": {
+              "abbreviation": "Y",
+              "coordinates": [
+                {
+                  "direction": "north",
+                  "unit": "degrees",
+                  "values": {
+                    "regular": [
+                      -23.375,
+                      0.44
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          "geolocation": {
+            "geodetic": {
+              "x": {
+                "ref": {
+                  "node": "../coords/longitude"
+                }
+              },
+              "y": {
+                "ref": {
+                  "node": "../coords/latitude"
+                }
+              },
+              "crs": {
+                "proj:code": "EPSG:4326"
+              }
+            },
+            "planar": {
+              "x": {
+                "ref": {
+                  "node": "../coords/utm_x"
+                }
+              },
+              "y": {
+                "ref": {
+                  "node": "../coords/utm_y"
+                }
+              }
+            }
           }
-        },
-        "y": {
-          "ref": {
-            "node": "../coords/latitude"
-          }
-        },
-        "crs": {
-          "proj:code": "EPSG:4326"
         }
-      },
-      "planar": {
-        "x": {
-          "ref": {
-            "node": "../coords/utm_x"
-          }
-        },
-        "y": {
-          "ref": {
-            "node": "../coords/utm_y"
-          }
-        }
-      }
+      ]
     },
     "long_name": "air temperature",
     "units": "K"
