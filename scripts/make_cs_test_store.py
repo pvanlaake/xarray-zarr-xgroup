@@ -1,14 +1,11 @@
 """
 Generate a minimal cs-convention test store for xarray-zarr-xgroup.
-Run this script to produce zarr_xgroup/tests/stores/cs_test.zarr.
-
-Usage:
-    python make_cs_test_store.py
+Run from the project root: python scripts/make_cs_test_store.py
 
 Exercises:
   - Regular inline spatial coordinates
   - External time coordinate array via ref
-  - Cross-group crs reference (shared CRS in parent group)  
+  - Cross-group crs reference (shared CRS in parent group)
   - Geolocation arrays via ref (CORDEX-style curvilinear grid)
   - Parametric vertical coordinates via ref terms (ROMS-style)
 """
@@ -17,7 +14,7 @@ import zarr
 import os, shutil
 from pathlib import Path
 
-STORE_PATH = Path(__file__).parent / "zarr_xgroup" / "tests" / "stores" / "cs_test.zarr"
+STORE_PATH = Path(__file__).parent.parent / "zarr_xgroup" / "tests" / "stores" / "cs_test.zarr"
 
 if os.path.exists(STORE_PATH):
     shutil.rmtree(STORE_PATH)
@@ -56,6 +53,7 @@ g_coords.attrs.update({
     "zarr_conventions": [CS_CMO, REF_CMO],
     "crs": {
         "WGS84": {
+            "type": "planar",
             "axes": {
                 "lon": {"abbreviation": "X", "coordinates": [{"direction": "east", "unit": "degrees", "values": {"regular": [-179.75, 0.5]}}]},
                 "lat": {"abbreviation": "Y", "coordinates": [{"direction": "north", "unit": "degrees", "values": {"regular": [-89.75, 0.5]}}]}
@@ -63,6 +61,7 @@ g_coords.attrs.update({
             "id": {"proj:code": "EPSG:4326"}
         },
         "standard_calendar": {
+            "type": "temporal",
             "axes": {
                 "time": {
                     "abbreviation": "T",
@@ -115,6 +114,7 @@ pr.attrs.update({
     "zarr_conventions": [CS_CMO, REF_CMO, GEO_CMO],
     "cs": {"crs": [
         {
+            "type": "planar",
             "name": "rotated pole grid",
             "axes": {
                 "rlon": {"abbreviation": "X", "coordinates": [{"direction": "east", "unit": "degrees", "values": {"regular": [-28.375, 0.11]}}]},
@@ -153,6 +153,7 @@ ot.attrs.update({
     "zarr_conventions": [CS_CMO, REF_CMO],
     "cs": {"crs": [
         {
+            "type": "planar",
             "name": "horizontal",
             "axes": {
                 "xi_rho": {"abbreviation": "X", "coordinates": [{"direction": "east", "unit": "degrees", "values": {"regular": [-70.0, 10.0/N_XI]}}]},
@@ -160,6 +161,7 @@ ot.attrs.update({
             }
         },
         {
+            "type": "vertical",
             "name": "ocean s-coordinate",
             "axes": {
                 "s_rho": {
@@ -181,6 +183,7 @@ ot.attrs.update({
             }
         },
         {
+            "type": "temporal",
             "name": "temporal",
             "axes": {
                 "time": {

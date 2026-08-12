@@ -57,6 +57,7 @@
     "cs": {
       "crs": [
         {
+          "type": "planar",
           "name": "horizontal",
           "axes": {
             "xi_rho": {
@@ -92,6 +93,7 @@
           }
         },
         {
+          "type": "vertical",
           "name": "ocean s-coordinate",
           "axes": {
             "s_rho": {
@@ -146,6 +148,7 @@
           }
         },
         {
+          "type": "temporal",
           "name": "temporal",
           "axes": {
             "time": {

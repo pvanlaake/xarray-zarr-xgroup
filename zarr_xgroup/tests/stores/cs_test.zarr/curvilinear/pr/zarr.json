@@ -59,6 +59,7 @@
     "cs": {
       "crs": [
         {
+          "type": "planar",
           "name": "rotated pole grid",
           "axes": {
             "rlon": {

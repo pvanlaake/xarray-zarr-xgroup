@@ -208,6 +208,7 @@ arr_bad.attrs.update({
     ],
     "cs": {
         "crs": [{
+            "type": "planar",
             "axes": {
                 "x": {
                     "abbreviation": "X",
@@ -246,6 +247,7 @@ arr_malformed.attrs.update({
     ],
     "cs": {
         "crs": [{
+            "type": "planar",
             "axes": {
                 "x": {
                     "abbreviation": "X",

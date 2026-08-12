@@ -1,0 +1,35 @@
+{
+  "attributes": {
+    "zarr_conventions": [
+      {
+        "uuid": "689b58e2-cf7b-45e0-9fff-9cfc0883d6b4",
+        "name": "spatial"
+      }
+    ],
+    "spatial:dimensions": [
+      "y",
+      "x"
+    ],
+    "spatial:transform": [
+      20.0,
+      0.0,
+      300000.0,
+      0.0,
+      -20.0,
+      5200000.0
+    ],
+    "spatial:shape": [
+      50,
+      50
+    ],
+    "spatial:bbox": [
+      300000.0,
+      5199000.0,
+      301000.0,
+      5200000.0
+    ],
+    "spatial:registration": "pixel"
+  },
+  "zarr_format": 3,
+  "node_type": "group"
+}

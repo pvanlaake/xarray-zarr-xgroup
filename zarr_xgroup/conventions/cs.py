@@ -175,6 +175,7 @@ def _process_coordinates_set(
     ref_declared: bool,
     source_path: str,
     variables: dict,
+    crs_type: str | None = None
 ) -> None:
     import xarray as xr
 
@@ -207,6 +208,8 @@ def _process_coordinates_set(
             attrs["calendar"] = time_obj["calendar"]
     if "attributes" in coords_obj:
         attrs.update(coords_obj["attributes"])
+    if crs_type is not None:
+        attrs["crs_type"] = crs_type
 
     var_name = axis_name if coord_idx == 0 else f"{axis_name}_{coord_idx}"
 
@@ -297,6 +300,9 @@ def _process_crs(
     - ``axes`` keyed object → coordinate variables per axis
     - ``geolocation`` object → geodetic and/or planar geolocation arrays
     """
+
+    crs_type = crs_obj.get("type")  # "planar", "temporal", "vertical", "compound", "undefined"
+
     # --- axes ---
     axes = crs_obj.get("axes", {})
     if isinstance(axes, dict):
@@ -319,6 +325,7 @@ def _process_crs(
                     ref_declared=ref_declared,
                     source_path=source_path,
                     variables=variables,
+                    crs_type=crs_type
                 )
 
     # --- geolocation ---
