@@ -128,6 +128,7 @@ def _resolve_arrays_object(
         resolved = resolve_ref(
             ref_obj,
             referencing_group=group,
+            referencing_path=source_path,
             store_root=root,
             source_path=source_path,
             attribute=f"geolocation/{kind}/{axis}/ref",

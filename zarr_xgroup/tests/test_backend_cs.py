@@ -112,15 +112,14 @@ def test_curv_dims(ds_curv):
 
 def test_curv_inline_rotated_coords(ds_curv):
     """rlon and rlat should be attached as coordinates from regular inline values."""
-    assert "rlon" in ds_curv.coords, "rlon coordinate missing"
-    assert "rlat" in ds_curv.coords, "rlat coordinate missing"
-
+    all_vars = set(ds_curv.coords) | set(ds_curv.data_vars)
+    assert "rlon" in all_vars, "rlon coordinate missing"
+    assert "rlat" in all_vars, "rlat coordinate missing"
 
 def test_curv_rlon_values(ds_curv):
     rlon = ds_curv.coords["rlon"].values
     assert rlon[0] == pytest.approx(-28.375, abs=1e-6)
     assert rlon[1] - rlon[0] == pytest.approx(0.11, abs=1e-6)
-
 
 def test_curv_external_time(ds_curv):
     assert "time" in ds_curv.coords

@@ -49,6 +49,7 @@
     "cs": {
       "crs": [
         {
+          "type": "planar",
           "axes": {
             "x": {
               "abbreviation": "X",

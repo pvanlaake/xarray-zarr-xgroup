@@ -1,7 +1,8 @@
 """
-Generate geolocation_test.zarr — test store for the geolocation service
-convention, with cs as the principal convention on all data arrays.
-Run from the project root: python scripts/make_geolocation_store.py
+Generate geolocation_test.zarr for xarray-zarr-xgroup tests.
+Run from project root: python scripts/make_geolocation_store.py
+
+All ref paths are relative to the referencing array (not its group).
 """
 import numpy as np
 import zarr
@@ -18,8 +19,7 @@ REF_UUID = "d89b30cf-ed8c-43d5-9a16-b492f0cd8786"
 
 def cmo(uuid, name, schema_url=None):
     d = {"uuid": uuid, "name": name}
-    if schema_url:
-        d["schema_url"] = schema_url
+    if schema_url: d["schema_url"] = schema_url
     return d
 
 rng = np.random.default_rng(42)
@@ -37,28 +37,27 @@ lon2d = (RLON + 0.1*np.sin(np.pi*RLAT/30)).astype("f8")
 lat2d = (RLAT + 0.1*np.cos(np.pi*RLON/30)).astype("f8")
 
 for name, data, attrs in [
-    ("longitude", lon2d, {"standard_name": "longitude", "units": "degrees_east"}),
-    ("latitude",  lat2d, {"standard_name": "latitude",  "units": "degrees_north"}),
-    ("utm_x", (lon2d*111320).astype("f8"), {"units": "m"}),
-    ("utm_y", (lat2d*110540).astype("f8"), {"units": "m"}),
+    ("longitude", lon2d,                      {"standard_name": "longitude", "units": "degrees_east"}),
+    ("latitude",  lat2d,                      {"standard_name": "latitude",  "units": "degrees_north"}),
+    ("utm_x",     (lon2d*111320).astype("f8"), {"units": "m"}),
+    ("utm_y",     (lat2d*110540).astype("f8"), {"units": "m"}),
 ]:
-    arr = g_coords.create_array(name, data=data, chunks=(N_ROW, N_COL),
-                                 dimension_names=["rlat", "rlon"])
-    arr.attrs.update(attrs)
+    a = g_coords.create_array(name, data=data, chunks=(N_ROW, N_COL), dimension_names=["rlat", "rlon"])
+    a.attrs.update(attrs)
 
-# Shared rotated-pole CRS for both data arrays
 def rotated_crs(geodetic_only=True):
+    # From /data/pr or /data/temp: ../../coords/longitude → /coords/longitude ✓
     geo = {
         "geodetic": {
-            "x": {"ref": {"node": "../coords/longitude"}},
-            "y": {"ref": {"node": "../coords/latitude"}},
+            "x": {"ref": {"node": "../../coords/longitude"}},
+            "y": {"ref": {"node": "../../coords/latitude"}},
             "crs": {"proj:code": "EPSG:4326"}
         }
     }
     if not geodetic_only:
         geo["planar"] = {
-            "x": {"ref": {"node": "../coords/utm_x"}},
-            "y": {"ref": {"node": "../coords/utm_y"}},
+            "x": {"ref": {"node": "../../coords/utm_x"}},
+            "y": {"ref": {"node": "../../coords/utm_y"}},
         }
     return {
         "type": "planar",
@@ -70,13 +69,12 @@ def rotated_crs(geodetic_only=True):
         "geolocation": geo
     }
 
-# /data group
 g_data = root.require_group("data")
 
 # pr — geodetic geolocation only
-pr_data = (0.001*rng.standard_normal((N_ROW, N_COL))).astype("f4")
-pr_arr = g_data.create_array("pr", data=pr_data, chunks=(N_ROW, N_COL),
-                              dimension_names=["rlat", "rlon"])
+pr_arr = g_data.create_array("pr",
+    data=(0.001*rng.standard_normal((N_ROW, N_COL))).astype("f4"),
+    chunks=(N_ROW, N_COL), dimension_names=["rlat", "rlon"])
 pr_arr.attrs.update({
     "zarr_conventions": [
         cmo(CS_UUID,  "cs",          "https://raw.githubusercontent.com/R-CF/zarr_convention_cs/main/schema.json"),
@@ -87,10 +85,10 @@ pr_arr.attrs.update({
     "long_name": "precipitation flux", "units": "kg m-2 s-1",
 })
 
-# temp — both geodetic and planar geolocation in the same geolocation object
-temp_data = (280.0+10.0*rng.standard_normal((N_ROW, N_COL))).astype("f4")
-temp_arr = g_data.create_array("temp", data=temp_data, chunks=(N_ROW, N_COL),
-                                dimension_names=["rlat", "rlon"])
+# temp — both geodetic and planar geolocation
+temp_arr = g_data.create_array("temp",
+    data=(280.0+10.0*rng.standard_normal((N_ROW, N_COL))).astype("f4"),
+    chunks=(N_ROW, N_COL), dimension_names=["rlat", "rlon"])
 temp_arr.attrs.update({
     "zarr_conventions": [
         cmo(CS_UUID,  "cs",          "https://raw.githubusercontent.com/R-CF/zarr_convention_cs/main/schema.json"),
@@ -102,15 +100,11 @@ temp_arr.attrs.update({
 })
 
 print(f"Written {STORE}")
-
 def inventory(grp, indent=0):
-    pad = "  " * indent
     for name in sorted(grp.array_keys()):
-        arr = grp[name]
-        print(f"{pad}  [{name}]  shape={arr.shape}  dims={arr.metadata.dimension_names}")
+        print("  "*indent + f"  [{name}]  {grp[name].shape}")
     for name in sorted(grp.group_keys()):
-        print(f"{pad}  /{name}/")
+        print("  "*indent + f"  /{name}/")
         inventory(grp[name], indent+1)
-
 print("\n=== Inventory ===")
 inventory(root)

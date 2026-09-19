@@ -4,7 +4,6 @@ Generate test stores for spatial, geolocation, and broken_refs conventions.
 Produces:
   spatial_test.zarr      - spatial convention, single array + group-level inheritance
   geolocation_test.zarr  - geolocation convention, curvilinear grid with lat/lon arrays
-  broken_refs.zarr       - store with unresolvable references for error handling tests
 """
 import numpy as np
 import zarr
@@ -183,87 +182,3 @@ temp_arr.attrs.update({
 })
 
 print(f"Written {GL}")
-
-# ===========================================================================
-# broken_refs.zarr
-# ===========================================================================
-BR = STORES / "broken_refs.zarr"
-if BR.exists(): shutil.rmtree(BR)
-br = zarr.open(str(BR), mode="w")
-br.attrs.update({"title": "broken references test store"})
-
-CS_UUID = "e4dbf0b7-7a00-4ce6-b23e-484292014ab4"
-REF_UUID = "d89b30cf-ed8c-43d5-9a16-b492f0cd8786"
-
-
-# Array with a reference to a non-existent node
-g_bad = br.require_group("bad")
-data_bad = rng.random((5, 5)).astype("f4")
-arr_bad = g_bad.create_array("var", data=data_bad, chunks=(5, 5),
-                              dimension_names=["y", "x"])
-arr_bad.attrs.update({
-    "zarr_conventions": [
-        {"uuid": CS_UUID, "name": "cs"},
-        {"uuid": REF_UUID, "name": "ref"},
-    ],
-    "cs": {
-        "crs": [{
-            "type": "planar",
-            "axes": {
-                "x": {
-                    "abbreviation": "X",
-                    "coordinates": [{
-                        "direction": "east",
-                        "unit": "m",
-                        "values": {
-                            "external": {
-                                "ref": {"node": "../nonexistent/coords"}
-                            }
-                        }
-                    }]
-                },
-                "y": {
-                    "abbreviation": "Y",
-                    "coordinates": [{
-                        "direction": "north",
-                        "unit": "m",
-                        "values": {"regular": [0.0, 1000.0]}
-                    }]
-                }
-            }
-        }]
-    }
-})
-
-# Array with a malformed ref path
-arr_malformed = g_bad.create_array(
-    "malformed", data=rng.random((5, 5)).astype("f4"),
-    chunks=(5, 5), dimension_names=["y", "x"]
-)
-arr_malformed.attrs.update({
-    "zarr_conventions": [
-        {"uuid": CS_UUID, "name": "cs"},
-        {"uuid": REF_UUID, "name": "ref"},
-    ],
-    "cs": {
-        "crs": [{
-            "type": "planar",
-            "axes": {
-                "x": {
-                    "abbreviation": "X",
-                    "coordinates": [{
-                        "direction": "east",
-                        "unit": "m",
-                        "values": {
-                            "external": {
-                                "ref": {}  # missing "node" field
-                            }
-                        }
-                    }]
-                }
-            }
-        }]
-    }
-})
-
-print(f"Written {BR}")

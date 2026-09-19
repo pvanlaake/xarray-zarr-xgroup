@@ -42,28 +42,54 @@
     "units": "degrees_C",
     "zarr_conventions": [
       {
-        "schema_url": "https://raw.githubusercontent.com/R-CF/zarr_convention_cs/main/schema.json",
         "uuid": "e4dbf0b7-7a00-4ce6-b23e-484292014ab4",
-        "name": "cs"
+        "name": "cs",
+        "schema_url": "https://raw.githubusercontent.com/R-CF/zarr_convention_cs/main/schema.json"
       },
       {
-        "schema_url": "https://raw.githubusercontent.com/R-CF/zarr_convention_ref/main/schema.json",
         "uuid": "d89b30cf-ed8c-43d5-9a16-b492f0cd8786",
-        "name": "ref"
+        "name": "ref",
+        "schema_url": "https://raw.githubusercontent.com/R-CF/zarr_convention_ref/main/schema.json"
       }
     ],
     "cs": {
       "crs": [
         {
           "ref": {
-            "node": "../coords",
+            "node": "../../coords",
             "attribute": "/attributes/crs/WGS84"
           }
         },
         {
-          "ref": {
-            "node": "../coords",
-            "attribute": "/attributes/crs/standard_calendar"
+          "type": "temporal",
+          "axes": {
+            "time": {
+              "abbreviation": "T",
+              "coordinates": [
+                {
+                  "direction": "future",
+                  "time": {
+                    "unit": "days",
+                    "epoch": "1850-01-01",
+                    "calendar": "standard"
+                  },
+                  "values": {
+                    "external": {
+                      "ref": {
+                        "node": "../../coords/time"
+                      }
+                    }
+                  },
+                  "boundaries": {
+                    "external": {
+                      "ref": {
+                        "node": "../../coords/time_bnds"
+                      }
+                    }
+                  }
+                }
+              ]
+            }
           }
         }
       ]

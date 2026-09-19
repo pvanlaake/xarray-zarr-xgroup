@@ -50,6 +50,7 @@ from xarray.core.utils import FrozenDict
 from zarr_xgroup.conventions.base import registry
 from zarr_xgroup.errors import XGroupNoPrincipalWarning
 from zarr_xgroup.i18n import _
+from zarr_xgroup.tests.test_backend_geolocation import ds_pr
 
 if TYPE_CHECKING:
     from xarray.core.dataset import Dataset
@@ -304,6 +305,16 @@ class XGroupBackendEntrypoint(BackendEntrypoint):
                 try:
                     coord_vars = principal.get_variables(zarr_arr, target_group, root)
                     variables.update(coord_vars)
+                    # Tell XArray which variables are coordinates for this array
+                    # via encoding rather than attrs, to avoid polluting user-visible attributes
+                    if coord_vars:
+                        # Only list primary coordinates in encoding, not bounds arrays
+                        primary_coords = [k for k in coord_vars.keys()
+                                          if not k.endswith("_bounds") and not k.endswith("_bnds")]
+                        enc = dict(primary.encoding)
+                        enc["coordinates"] = " ".join(primary_coords)
+                        primary = xr.Variable(primary.dims, primary._data, primary.attrs, enc)
+                        variables[arr_name] = primary
                 except NotImplementedError:
                     warnings.warn(
                         _(
@@ -325,7 +336,17 @@ class XGroupBackendEntrypoint(BackendEntrypoint):
             for svc in services:
                 try:
                     svc_vars = svc.get_variables(zarr_arr, target_group, root)
-                    variables.update(svc_vars)
+                    if svc_vars:
+                        variables.update(svc_vars)
+                        primary_svc_coords = [k for k in svc_vars.keys()
+                                              if not k.endswith("_bounds") and not k.endswith("_bnds")]
+                        if primary_svc_coords:
+                            enc = dict(variables[arr_name].encoding)
+                            existing = enc.get("coordinates", "")
+                            new_names = " ".join(primary_svc_coords)
+                            enc["coordinates"] = (existing + " " + new_names).strip()
+                            v = variables[arr_name]
+                            variables[arr_name] = xr.Variable(v.dims, v._data, v.attrs, enc)
                 except NotImplementedError:
                     pass
                 except Exception as exc:
@@ -415,7 +436,7 @@ class XGroupBackendEntrypoint(BackendEntrypoint):
         store = ResolvedZarrStore(variables, attrs, dimensions)
         store_entrypoint = StoreBackendEntrypoint()
 
-        return store_entrypoint.open_dataset(
+        ds = store_entrypoint.open_dataset(
             store,
             mask_and_scale=mask_and_scale,
             decode_times=decode_times,
@@ -425,6 +446,7 @@ class XGroupBackendEntrypoint(BackendEntrypoint):
             use_cftime=use_cftime,
             decode_timedelta=decode_timedelta,
         )
+        return ds
 
     def open_datatree(
         self,

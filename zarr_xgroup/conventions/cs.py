@@ -100,6 +100,7 @@ def _resolve_values(
         return resolve_ref(
             ref_obj,
             referencing_group=group,
+            referencing_path=source_path,
             store_root=root,
             source_path=source_path,
             attribute=f"cs/axes/{axis_name}/values/external/ref",
@@ -144,6 +145,7 @@ def _resolve_boundaries(
         return resolve_ref(
             ref_obj,
             referencing_group=group,
+            referencing_path=source_path,
             store_root=root,
             source_path=source_path,
             attribute=f"cs/axes/{axis_name}/boundaries/external/ref",
@@ -178,7 +180,6 @@ def _process_coordinates_set(
     crs_type: str | None = None
 ) -> None:
     import xarray as xr
-
     dim_length = _array_dim_length(array, axis_name)
 
     values_obj = coords_obj.get("values")
@@ -300,7 +301,6 @@ def _process_crs(
     - ``axes`` keyed object → coordinate variables per axis
     - ``geolocation`` object → geodetic and/or planar geolocation arrays
     """
-
     crs_type = crs_obj.get("type")  # "planar", "temporal", "vertical", "compound", "undefined"
 
     # --- axes ---
@@ -384,7 +384,8 @@ class CsConventionHandler(ConventionHandler):
         group: zarr.Group,
         array: zarr.Array,
     ) -> bool:
-        return convention_is_declared(array, uuid=_CS_UUID, name="cs")
+        result = convention_is_declared(array, uuid=_CS_UUID, name="cs")
+        return result
 
     def get_variables(
         self,
@@ -428,6 +429,7 @@ class CsConventionHandler(ConventionHandler):
                     resolved = resolve_ref(
                         crs_item["ref"],
                         referencing_group=group,
+                        referencing_path=source_path,
                         store_root=root,
                         source_path=source_path,
                         attribute="cs/crs/ref",

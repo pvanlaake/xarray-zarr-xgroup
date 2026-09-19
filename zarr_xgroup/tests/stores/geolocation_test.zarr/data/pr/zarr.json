@@ -94,12 +94,12 @@
             "geodetic": {
               "x": {
                 "ref": {
-                  "node": "../coords/longitude"
+                  "node": "../../coords/longitude"
                 }
               },
               "y": {
                 "ref": {
-                  "node": "../coords/latitude"
+                  "node": "../../coords/latitude"
                 }
               },
               "crs": {
