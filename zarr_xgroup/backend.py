@@ -293,14 +293,7 @@ class XGroupBackendEntrypoint(BackendEntrypoint):
             principal, services = registry.detect(root, target_group, zarr_arr)
 
             if principal is None:
-                warnings.warn(
-                    _(
-                        "Array '{path}' has no declared principal convention. "
-                        "It will be loaded without coordinate resolution."
-                    ).format(path=zarr_arr.path),
-                    XGroupNoPrincipalWarning,
-                    stacklevel=3,
-                )
+                pass
             else:
                 try:
                     coord_vars = principal.get_variables(zarr_arr, target_group, root)

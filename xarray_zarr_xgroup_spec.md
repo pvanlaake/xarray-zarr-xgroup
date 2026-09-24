@@ -5,8 +5,8 @@
 **Engine name:** `xgroup`
 
 **Version:** initial release (draft)
-**Date:** 2026-06-01
-**Status:** Pre-implementation
+**Date:** 2026-09-24
+**Status:** Testing
 
 ---
 
@@ -53,7 +53,7 @@ data in Zarr stores. It is an umbrella for convention development. In the
 context of this specification we can identify two broad groups of GeoZarr
 conventions:
 
-1. **Principal conventions** provide coordinates for all of the axes that form
+1. **Principal conventions** provide coordinates for all axes that form
    the coordinate system of the array. Two principal conventions will be
    supported by this project initially. The `cs` (coordinate set) convention
    is a comprehensive scheme to attach coordinates to any axis of the array.
@@ -141,7 +141,7 @@ the Zarr store or group.
 ### 3.1 Initial release
 
 - Opening a Zarr store or any group therein
-- Full traversal of the group hierarchy
+- Full traversal of the group hierarchy enabled
 - Resolution of cross-group structural references to secondary nodes as per
   the declared convention of the array
 - Cross-store reference resolution for publicly accessible stores reachable
@@ -223,7 +223,8 @@ philosophy that every array is self-describing and can stand on its own.
 
 A principal convention defines the coordinate structure of an array — how its
 axes are described and how secondary coordinate nodes are referenced. Exactly
-one principal convention must be declared per array.
+one principal convention must be declared per array. When no principal convention
+is declared the array will be opened as a regular Zarr array.
 
 Built-in principal conventions:
 
@@ -362,18 +363,8 @@ my_convention = "my_package.convention:MyConventionHandler"
 
 ## 6. Error handling and warnings
 
-Arrays without a declared principal convention emit `XGroupNoPrincipalWarning`
-and are loaded without secondary node resolution. This warning is suppressable
-via standard Python `warnings` machinery and may be promoted to an error by
-the caller if strict behaviour is required:
-
-```python
-import warnings
-from zarr_xgroup.errors import XGroupNoPrincipalWarning
-
-# promote to error
-warnings.filterwarnings("error", category=XGroupNoPrincipalWarning)
-```
+Arrays without a declared principal convention load as a regular Zarr
+array. There is no mechanism to identify them as deficient.
 
 Unresolvable reference paths raise `XGroupReferenceError` identifying the
 source array path, the offending attribute, the unresolved target path, and
@@ -381,7 +372,6 @@ the reason for failure.
 
 | Condition | Behaviour |
 |---|---|
-| No principal convention detected | `XGroupNoPrincipalWarning`; array loaded without resolution |
 | Reference target path not found | `XGroupReferenceError` raised |
 | Reference target store unreachable | `XGroupStoreError` raised |
 | Malformed reference path | `XGroupPathError` raised |
