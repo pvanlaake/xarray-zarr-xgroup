@@ -33,12 +33,13 @@ def test_open_dataset_ocean_has_data_vars(roms_store):
     assert "zeta" in ds.data_vars
 
 
-def test_open_dataset_ocean_emits_no_principal_warning(roms_store):
+def test_open_dataset_ocean_without_principal_does_not_warn(roms_store):
+    """Arrays without a principal convention load silently (see 7c5edc9)."""
     with warnings.catch_warnings(record=True) as w:
         warnings.simplefilter("always")
         xr.open_dataset(roms_store, engine="xgroup", group="/ocean")
     no_principal = [x for x in w if issubclass(x.category, XGroupNoPrincipalWarning)]
-    assert len(no_principal) > 0, "Expected XGroupNoPrincipalWarning for plain CF store"
+    assert not no_principal, f"Unexpected XGroupNoPrincipalWarning: {[str(x.message) for x in no_principal]}"
 
 
 def test_open_dataset_ocean_dims(roms_store):

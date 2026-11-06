@@ -102,7 +102,7 @@
                   "node": "../../coords/latitude"
                 }
               },
-              "crs": {
+              "id": {
                 "proj:code": "EPSG:4326"
               }
             },

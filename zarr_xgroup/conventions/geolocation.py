@@ -23,12 +23,12 @@ The ``geolocation`` attribute has the following structure::
         "geodetic": {
           "x": {"ref": {"node": "longitude"}},
           "y": {"ref": {"node": "latitude"}},
-          "crs": {"proj:code": "EPSG:4326"}   # optional
+          "id": {"proj:code": "EPSG:4326"}    # optional
         },
         "planar": {                             # optional
           "x": {"ref": {"node": "../grid/easting"}},
           "y": {"ref": {"node": "../grid/northing"}},
-          "crs": {"proj:code": "EPSG:32628"}
+          "id": {"proj:code": "EPSG:32628"}
         }
       }
     }
@@ -38,6 +38,15 @@ wrapper, consistent with other conventions in this ecosystem. For
 ``geodetic``, ``x`` is longitude and ``y`` is latitude. For ``planar``,
 ``x`` is easting and ``y`` is northing. These names can be freely
 chosen by the data producer.
+
+Dimension matching
+------------------
+The geolocation arrays MUST have ``dimension_names``. They are matched to
+the referring array by name: the ``X`` and ``Y`` dimensions of the referring
+array, as identified by the principal convention, MUST appear in each
+geolocation array, every other dimension of a geolocation array MUST also be
+a dimension of the referring array, and the lengths of matching dimensions
+MUST be equal. The order of the dimensions is free.
 
 Variable naming
 ---------------
@@ -72,6 +81,37 @@ __all__ = ["GeolocationConventionHandler"]
 _GEOLOCATION_NAME = "geolocation"
 
 
+def _dimension_names(arr) -> list:
+    """Dimension names of a Zarr array (v3 metadata or v2 attribute)."""
+    try:
+        names = arr.metadata.dimension_names
+    except AttributeError:
+        names = arr.attrs.get("_ARRAY_DIMENSIONS")
+    return list(names or [])
+
+
+def _xy_dimensions(array, group) -> list[str] | None:
+    """
+    Names of the X and Y dimensions of ``array`` as identified by its
+    principal convention: the axes with abbreviation ``X`` and ``Y`` in the
+    ``cs`` attribute, else ``spatial:dimensions`` (Y, X order) on the array
+    or its parent group. Returns None when they cannot be identified.
+    """
+    attrs = dict(array.attrs)
+    cs = attrs.get("cs")
+    if isinstance(cs, dict):
+        abbr = {ax.get("abbreviation"): dim
+                for crs in cs.get("crs", []) if isinstance(crs, dict)
+                for dim, ax in (crs.get("axes") or {}).items() if isinstance(ax, dict)}
+        xy = [abbr.get("X"), abbr.get("Y")]
+    else:
+        dims = attrs.get("spatial:dimensions")
+        if dims is None and group is not None:
+            dims = dict(group.attrs).get("spatial:dimensions")
+        xy = [dims[1], dims[0]] if dims and len(dims) == 2 else [None, None]
+    return xy if all(xy) else None
+
+
 def _resolve_arrays_object(
     arrays_obj: dict,
     kind: str,
@@ -89,7 +129,7 @@ def _resolve_arrays_object(
     ----------
     arrays_obj : dict
         The ``geodetic`` or ``planar`` object with ``x``, ``y``, and
-        optional ``crs`` fields. Each of ``x`` and ``y`` is a
+        optional ``id`` fields. Each of ``x`` and ``y`` is a
         ``{"ref": <ref object>}`` wrapper.
     kind : str
         ``"geodetic"`` or ``"planar"`` — used in error messages only.
@@ -98,6 +138,9 @@ def _resolve_arrays_object(
     import xarray as xr
     from xarray.backends.zarr import ZarrArrayWrapper
     from xarray.core import indexing
+
+    ref_dims = _dimension_names(array)
+    xy_dims = _xy_dimensions(array, group)
 
     for axis in ("x", "y"):
         wrapper = arrays_obj.get(axis)
@@ -148,13 +191,32 @@ def _resolve_arrays_object(
         # Use the basename of the resolved array path as the variable name
         var_name = resolved.path.rstrip("/").rsplit("/", 1)[-1]
 
-        try:
-            dims = list(resolved.metadata.dimension_names or [])
-        except AttributeError:
-            dims = list(resolved.attrs.get("_ARRAY_DIMENSIONS", []))
-
-        if not dims:
-            dims = [f"dim_{i}" for i in range(resolved.ndim)]
+        dims = _dimension_names(resolved)
+        reason = None
+        if len(dims) != resolved.ndim or any(d is None for d in dims):
+            reason = _("geolocation arrays must have dimension_names.")
+        elif xy_dims and not all(d in dims for d in xy_dims):
+            reason = _(
+                "geolocation array must have the X and Y dimensions "
+                "'{x}' and '{y}' of the referring array."
+            ).format(x=xy_dims[0], y=xy_dims[1])
+        elif any(d not in ref_dims for d in dims):
+            reason = _(
+                "geolocation array has dimensions that are not in the "
+                "referring array: {dims}."
+            ).format(dims=", ".join(d for d in dims if d not in ref_dims))
+        elif any(n != array.shape[ref_dims.index(d)] for d, n in zip(dims, resolved.shape)):
+            reason = _(
+                "geolocation array does not match the lengths of the "
+                "dimensions of the referring array."
+            )
+        if reason is not None:
+            raise XGroupReferenceError(
+                source_path=source_path,
+                attribute=f"geolocation/{kind}/{axis}/ref",
+                target_path=ref_obj.get("node", "<unknown>"),
+                reason=reason,
+            )
 
         attrs = dict(resolved.attrs)
         # Record the geolocation role for downstream tools

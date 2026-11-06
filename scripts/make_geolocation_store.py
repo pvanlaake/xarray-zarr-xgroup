@@ -51,7 +51,7 @@ def rotated_crs(geodetic_only=True):
         "geodetic": {
             "x": {"ref": {"node": "../../coords/longitude"}},
             "y": {"ref": {"node": "../../coords/latitude"}},
-            "crs": {"proj:code": "EPSG:4326"}
+            "id": {"proj:code": "EPSG:4326"}
         }
     }
     if not geodetic_only:

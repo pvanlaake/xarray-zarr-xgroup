@@ -50,7 +50,6 @@ from xarray.core.utils import FrozenDict
 from zarr_xgroup.conventions.base import registry
 from zarr_xgroup.errors import XGroupNoPrincipalWarning
 from zarr_xgroup.i18n import _
-from zarr_xgroup.tests.test_backend_geolocation import ds_pr
 
 if TYPE_CHECKING:
     from xarray.core.dataset import Dataset

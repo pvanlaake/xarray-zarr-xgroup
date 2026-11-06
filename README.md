@@ -386,7 +386,7 @@ All standard XArray `open_dataset` parameters pass through to
 | `roms_test.zarr` | Plain CF attributes | Cross-group hierarchy, DataTree construction |
 | `cs_test.zarr` | `cs`, `ref` | All `cs` reference patterns |
 | `spatial_test.zarr` | `spatial` | Array-level attrs, group inheritance, node registration |
-| `geolocation_test.zarr` | `geolocation`, `ref` | Geodetic and planar geolocation arrays |
+| `geolocation_test.zarr` | `cs`, `geolocation`, `ref` | Geodetic and planar geolocation arrays |
 | `broken_refs.zarr` | `cs`, `ref` | Warning emission and error message content |
 
 ### 8.2 Test separation
@@ -439,6 +439,7 @@ xarray-zarr-xgroup/
         ├── test_backend_cs.py
         ├── test_backend_spatial.py
         ├── test_backend_geolocation.py
+        ├── test_geolocation_dims.py
         ├── test_error_handling.py
         └── stores/
             ├── roms_test.zarr/
